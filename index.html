@@ -6,9 +6,19 @@
     <title>Moon game</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" media="screen" href="style.css" />
-    <script src="app.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+        <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.4.4.min.js"></script>
+  
 </head>
 <body>
-    
+    <div id="Controls" align="center">Controls :: Use &larr; and &rarr; to move left and right. Use &uarr; and &darr; to move
+        cannon anticlockwise and clockwise.<br> Press (Space) to shoot.</div>
+    <div id="Player1Score">0</div>
+    <div id="Player2Score">0</div>
+    <div id="PlayerTeam">Waiting to connect</div>
+    <div id="WhoseTurn">Waiting to connect</div>
+    <canvas id="testCanvas" width="1000" height="500"></canvas>
+    <script src="app.js"></script>
 </body>
 </html>
