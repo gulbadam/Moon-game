@@ -1,6 +1,6 @@
 
 (function() {
-    var canvas, ctx, w, h, player1X, player2X, playerY, radius, backImg, angle1, angle2, currIndex1, currIndex2;
+    var canvas, ctx, w, h, player1X, player2X, playerY, radius, backImg, angle1, angle2, currIndex1, currIndex2, turn, team, moveStep, angleStep ;
     function init() {
         console.log("start")
         canvas = document.getElementById('moonWarsCanvas');
@@ -15,6 +15,11 @@
         angle2 = Math.PI;
         currIndex1 = {x: 0, y: 0};
         currIndex2 = {x: 0, y: 0};
+        turn = 0;
+        team = "none";
+        moveStep = 2;
+        angleStep = Math.PI/40;
+        window.onkeydown = keyEvent;
         addBackground();
         console.log("loaded")
     }
@@ -29,7 +34,6 @@ drawPlayer2(player2X, playerY, angle2);
 }
 function addBackground() {
     console.log ('Hey yo!!');
-
     backImg.src = 'back.jpeg'
 }
 function drawLayout() {
@@ -55,12 +59,8 @@ function drawPlayer1(x, y,  angle) {
     ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
     ctx.fillStyle='#DA0000';
     ctx.fill();
-    
-    
-
-}
+    }
 function drawPlayer2(x, y, angle) {
-    console.log("draw2")
     currIndex2.x = x + 35 * Math.cos(angle);
     currIndex2.y = y - 35 * Math.sin(angle);
     ctx.strokeStyle = "#004cb3";
@@ -72,7 +72,29 @@ function drawPlayer2(x, y, angle) {
     ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
     ctx.fillStyle = '#004cb3';
     ctx.fill();
-    console.log("finis")
-}
+    }
+    function keyEvent(e) {
+        e.stopImmediatePropagation();
+        var keyCode = e.which;
+        console.log(keyCode)
+        switch (keyCode) {
+            case 37 :
+                if(!turn) {
+                    if(player1X - 40 > 0) {
+                        player1X = player1X - moveStep;
+                    }
+                } else {
+                    if(player2X - 40 > (w/2)+2) {
+                        player2X = player2X - moveStep;
+                    }
+                }
+                addBackground();
+                break;
+        
+            default:
+                break;
+        }
+
+    }
     init();
 }());
