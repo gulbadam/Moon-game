@@ -1,0 +1,21 @@
+canvas {
+    z-index: 1;
+}
+#Player1Score {
+    color: #DA0000;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-size: 500%;
+    position: absolute;
+    top: 50px;
+    left:230px;
+    z-index: 2
+}
+#Player2Score {
+    color: #004cb3;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-size: 500%;
+    position: absolute;
+    top: 50px;
+    left: 730px;
+    z-index: 2
+}
