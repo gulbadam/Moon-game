@@ -28,7 +28,15 @@ function addBackground() {
     backImg.src = 'back.jpeg'
 }
 function drawLayout() {
-   ctx.strokeStyle  = 'black'
+   ctx.strokeStyle  = 'black';
+   ctx.lineWidth=1;
+   ctx.strokeRect(0, 0, w, h,);
+   ctx.strokeStyle = 'white';
+   ctx.lineWidth =4;
+   ctx.beginPath();
+   ctx.moveTo(w/2, h);
+   ctx.lineTo(w/2, h-100);
+   ctx.stroke();
 }
     init();
 }());
