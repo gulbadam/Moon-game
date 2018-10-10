@@ -1,6 +1,7 @@
 
 (function() {
-    var canvas, ctx, w, h, player1X, player2X, playerY, radius, backImg, angle1, angle2, currIndex1, currIndex2, turn, team, moveStep, angleStep, dirX, dirY, tempIndex1, tempIndex2, asteroidRadius ;
+    var canvas, ctx, w, h, player1X, player2X, playerY, radius, backImg, angle1, angle2, currIndex1, currIndex2, turn, team, moveStep, angleStep, dirX, dirY, tempIndex1, tempIndex2, asteroidRadius, score, channel_name, pubnub ;
+    channel_name = "Moon-game";
     function init() {
         console.log("start")
         canvas = document.getElementById('moonWarsCanvas');
@@ -17,17 +18,26 @@
         currIndex2 = {x: 0, y: 0};
         tempIndex1 ={x: -10, y: -10};
         tempIndex2 = { x: -10, y: -10 };
-        asteroidRadius = 2;
+        asteroidRadius = 4;
         dirX= 1;
         dirY=1;
         turn = 0;
         team = "none";
         moveStep = 2;
         angleStep = Math.PI/40;
+        score = {P1: 0, P2: 0};
         window.onkeydown = keyEvent;
         addBackground();
         console.log("loaded")
     }
+    function reinit(){
+        dirX =1;
+        dirY= 1;
+        tempIndex1 = { x: -10, y: -10 };
+        tempIndex2 = { x: -10, y: -10 };
+
+    }
+    
 backImg = new Image();
 backImg.onload = function() {
     console.log ('Hi ya!!');
@@ -46,6 +56,14 @@ function addBackground() {
     console.log ('Hey yo!!');
     backImg.src = 'back.jpeg'
 }
+    function updateP1Score() {
+        $("#Player1Score").text(Number($('#Player1Score').text())+1)
+
+}
+    function updateP2Score() {
+        $("#Player2Score").text(Number($('#Player2Score').text()) + 1)
+
+    }
 function drawLayout() {
    ctx.strokeStyle  = 'black';
    ctx.lineWidth=1;
@@ -83,16 +101,35 @@ function drawPlayer2(x, y, angle) {
     ctx.fillStyle = '#004cb3';
     ctx.fill();
     }
+    function detectCollision(x1, y1, r1, x2, y2, r2) {
+        var dist2 =((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+        if(dist2<(r1+r2)*(r1+r2)) {
+            return true;
+        }
+        return false;
+}
      function launchAsteroid(index) {
+         if(detectCollision(index.x, index.y, asteroidRadius, player1X, playerY, radius )) {
+            score.P2+=1;
+            updateP2Score();
+            turn = 1-turn;
+            return;
+         }
+         if (detectCollision(index.x, index.y, asteroidRadius, player2X, playerY, radius)) {
+             score.P1 += 1;
+             updateP1Score();
+             turn = 1 - turn;
+             return; 
+            }
          if (index.x>=(w/2)-2 && index.x<=(w/2)+2 && index.y<=h && index.y>=h-100) {
              dirX = -dirX;
          } else if (index.x < 0) {
              dirX = -dirX;
-         } else if (index.x > w) {
+         } else if (index.x > w-1) {
              dirX = -dirX;
         } else if ( index.y < 0) {
             dirY = -dirY;
-        } else if (index.y > h) {
+        } else if (index.y > h-1) {
             turn = 1- turn;
             return;
         }
@@ -113,13 +150,42 @@ function drawPlayer2(x, y, angle) {
         ctx.fill();
         setTimeout(() => {
             addBackground()
-        }, 100);
+        }, 10);
 
 
      }
+     pubnub = new PubNub({
+         publishKey: "pub-c-f113862e-485a-4008-8b12-0974bfe14219",
+         subscribeKey: "sub-c-42e5ffe8-cc2e-11e8-80d1-72aadab1d7f1"
+     })
+     pubnub.subscribe({
+         channels: [channel_name]
+     });
+     pubnub.addListener({
+         message: function(message) {
+             console.log(message)
+             var message = message.message;
+
+         }
+     })
+     pubnub.hereNow({
+         channels: [channel_name],
+         includeUUIDs: false
+     }, function(status, response ) {
+         if(response.totalOccupancy ==0 ) {
+             team = "red";
+         } else if (response.totalOccupancy == 1) {
+             team = "blue";
+         } else {
+             team ="none";
+         }
+     })
     function keyEvent(e) {
         e.stopImmediatePropagation();
         var keyCode = e.which;
+        if((team == "none") || (!turn && team == "blue") || (turn && team == "red")) {
+            return
+        }
         console.log(keyCode)
         switch (keyCode) {
             case 37 :
@@ -187,7 +253,17 @@ function drawPlayer2(x, y, angle) {
                 addBackground();
                 break;
             case 32:
-            launchAsteroid(currIndex1);
+            pubnub.publish({
+               channel: channel_name,
+               message: {
+                   turn: turn,
+                   centerX: turn ? player2X: player1X,
+                   angle: turn ? angle2 : angle1,
+                   currIndex: turn ? currIndex2 : currIndex1,
+                   score: score
+               }
+            })
+            //launchAsteroid(currIndex1);
                 break;
         
             default:
