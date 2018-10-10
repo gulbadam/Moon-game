@@ -1,7 +1,7 @@
 
 (function() {
     var canvas, ctx, w, h, player1X, player2X, playerY, radius, backImg, angle1, angle2, currIndex1, currIndex2, turn, team, moveStep, angleStep, dirX, dirY, tempIndex1, tempIndex2, asteroidRadius, score, channel_name, pubnub ;
-    channel_name = "Moon-game";
+    channel_name = "Moon-game23";
     function init() {
         console.log("start")
         canvas = document.getElementById('moonWarsCanvas');
@@ -27,21 +27,27 @@
         angleStep = Math.PI/40;
         score = {P1: 0, P2: 0};
         window.onkeydown = keyEvent;
+        
         addBackground();
         console.log("loaded")
+    
     }
     function reinit(){
         dirX =1;
-        dirY= 1;
+        dirY= - 1;
         tempIndex1 = { x: -10, y: -10 };
         tempIndex2 = { x: -10, y: -10 };
+        if (turn) {
+            $('#WhoseTurn').text('BLUE\'s Turn');
+        } else {
+            $('#WhoseTurn').text('RED\'s Turn');
+        }
+        return;
 
     }
     
 backImg = new Image();
 backImg.onload = function() {
-    console.log ('Hi ya!!');
-
 ctx.drawImage(backImg, 0, 0, w, h)
 drawLayout();
 drawPlayer1(player1X, playerY, angle1);
@@ -53,7 +59,6 @@ if(!turn && tempIndex1.x!=-10 && tempIndex1.y!=-10) {
 }
 }
 function addBackground() {
-    console.log ('Hey yo!!');
     backImg.src = 'back.jpeg'
 }
     function updateP1Score() {
@@ -76,29 +81,35 @@ function drawLayout() {
    ctx.stroke();
 }
 function drawPlayer1(x, y,  angle) {
-    currIndex1.x = x + 35 * Math.cos(angle);
-    currIndex1.y = y - 35 * Math.sin(angle);
+    currIndex1.x = x + 35*Math.cos(angle);
+    currIndex1.y = y - 35*Math.sin(angle);
     ctx.strokeStyle= "#DA0000";
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(currIndex1.x, currIndex1.y);
     ctx.stroke();
+    var grd = ctx.createRadialGradient(x + 8, y - 8, 2, x, y, radius);
+    grd.addColorStop(0, '#FA8072');
+    grd.addColorStop(1, '#DA0000');
     ctx.beginPath();
-    ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
-    ctx.fillStyle='#DA0000';
+    ctx.arc(x, y, radius, 0, 2*Math.PI, false);
+    ctx.fillStyle = grd;
     ctx.fill();
     }
 function drawPlayer2(x, y, angle) {
-    currIndex2.x = x + 35 * Math.cos(angle);
-    currIndex2.y = y - 35 * Math.sin(angle);
+    currIndex2.x = x + 35*Math.cos(angle);
+    currIndex2.y = y - 35*Math.sin(angle);
     ctx.strokeStyle = "#004cb3";
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(currIndex2.x, currIndex2.y);
     ctx.stroke();
+    var grd = ctx.createRadialGradient(x + 8, y - 8, 2, x, y, radius);
+    grd.addColorStop(0, '#8ED6FF');
+    grd.addColorStop(1, '#004CB3');
     ctx.beginPath();
-    ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
-    ctx.fillStyle = '#004cb3';
+    ctx.arc(x, y, radius, 0, 2*Math.PI, false);
+    ctx.fillStyle = grd;
     ctx.fill();
     }
     function detectCollision(x1, y1, r1, x2, y2, r2) {
@@ -113,13 +124,15 @@ function drawPlayer2(x, y, angle) {
             score.P2+=1;
             updateP2Score();
             turn = 1-turn;
+            reinit();
             return;
          }
          if (detectCollision(index.x, index.y, asteroidRadius, player2X, playerY, radius)) {
              score.P1 += 1;
              updateP1Score();
              turn = 1 - turn;
-             return; 
+             reinit ();
+            return; 
             }
          if (index.x>=(w/2)-2 && index.x<=(w/2)+2 && index.y<=h && index.y>=h-100) {
              dirX = -dirX;
@@ -131,14 +144,15 @@ function drawPlayer2(x, y, angle) {
             dirY = -dirY;
         } else if (index.y > h-1) {
             turn = 1- turn;
+            reinit();
             return;
         }
         if(!turn) {
-            tempIndex1.x = index.x + dirX*2*Math.cos(angle1);
-            tempIndex1.y = index.y + dirY * 2 * Math.sin(angle1)
+            tempIndex1.x = index.x + dirX*Math.cos(angle1);
+            tempIndex1.y = index.y + dirY*Math.sin(angle1)
         } else{
-            tempIndex2.x = index.x + dirX * 2 * Math.cos(angle2);
-            tempIndex2.y = index.y + dirY * 2 * Math.sin(angle2)
+            tempIndex2.x = index.x + dirX * Math.cos(angle2);
+            tempIndex2.y = index.y + dirY * Math.sin(angle2)
         }
         ctx.beginPath();
         if(!turn) {
@@ -150,7 +164,7 @@ function drawPlayer2(x, y, angle) {
         ctx.fill();
         setTimeout(() => {
             addBackground()
-        }, 10);
+        }, 4);
 
 
      }
@@ -165,21 +179,41 @@ function drawPlayer2(x, y, angle) {
          message: function(message) {
              console.log(message)
              var message = message.message;
+             turn = message.turn;
+             score =message.score;
+             if(turn) {
+                 player2X = message.centerX;
+                 angle2 = message.angle;
+                 currIndex2 = message.currIndex;
+             } else {
+                 player1X = message.centerX;
+                 angle1 = message.angle;
+                 currIndex1 = message.currIndex;
+             }
+             launchAsteroid(message.currIndex);
 
          }
      })
-     pubnub.hereNow({
-         channels: [channel_name],
-         includeUUIDs: false
-     }, function(status, response ) {
-         if(response.totalOccupancy ==0 ) {
-             team = "red";
-         } else if (response.totalOccupancy == 1) {
-             team = "blue";
-         } else {
-             team ="none";
-         }
-     })
+
+    pubnub.hereNow({
+        channels: [channel_name],
+        includeUUIDs: false
+    }, function (status, response) {
+        console.log(response);
+        if (response.totalOccupancy == 0) {
+            team = "red";
+            $('#PlayerTeam').text('You are RED');
+            $('#WhoseTurn').text('RED\'s Turn');
+            $('#Controls').css("color", "#DA0000");
+        } else if (response.totalOccupancy == 1) {
+            team = "blue";
+            $('#PlayerTeam').text('You are BLUE');
+            $('#WhoseTurn').text('RED\'s Turn');
+            $('#Controls').css("color", "#004CB3");
+        } else {
+            team = "none";
+        }
+    })
     function keyEvent(e) {
         e.stopImmediatePropagation();
         var keyCode = e.which;
@@ -193,14 +227,12 @@ function drawPlayer2(x, y, angle) {
                     console.log("running 37")
                     if(player1X - 40 > 0) {
                         player1X = player1X - moveStep;
-                        console.log("1x +"+player1X)
-                        console.log ('-40 1x');
+                        console.log("1x -"+player1X)
                         }
                 } else {
                     if(player2X - 40 > (w/2)+2) {
                         player2X = player2X - moveStep;
                         console.log ("2x -" + player2X);
-                        console.log ('-40 2x');
                     }
                 }
                 addBackground();
@@ -211,13 +243,11 @@ function drawPlayer2(x, y, angle) {
                     if (player1X + 40 < (w/2)-2) {
                         player1X = player1X + moveStep;
                         console.log ("1x ++" + player1X);
-                        console.log("+40 1x")
                     }
                 } else {
                     if (player2X + 40 < w ) {
                         player2X = player2X + moveStep;
                         console.log("2x +" + player2X)
-                        console.log("+40 2x")
                     }
                 }
                 addBackground();
@@ -261,8 +291,14 @@ function drawPlayer2(x, y, angle) {
                    angle: turn ? angle2 : angle1,
                    currIndex: turn ? currIndex2 : currIndex1,
                    score: score
-               }
-            })
+               }, function(status, response) {
+                    if (status.error) {
+                        console.log(status)
+                    } else {
+                        console.log("message Published w/ timetoken", response.timetoken)
+                    }
+                }
+                })
             //launchAsteroid(currIndex1);
                 break;
         
